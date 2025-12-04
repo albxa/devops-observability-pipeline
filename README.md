@@ -1,13 +1,31 @@
 # DevOps Pipeline Project
-A complete end-to-end DevOps project demonstrating modern deployment practices using containerized applications, continuous integration, and real-time monitoring. This project aims to simulate a production-like environment by building, deploying, and observing a Python-based web service with industry-standard tools.
+A complete end-to-end DevOps project demonstrating modern deployment practices using containerized applications, continuous integration, and real-time monitoring. 
+
+This project aims to simulate a production-like environment by building, deploying, and observing a Python-based web service with industry-standard tools.
 
 ## Features
-- Containerized Python API: Lightweight FastAPI service packaged using Docker.
-- Automated CI/CD Pipeline: GitLab CI/CD pipeline handling testing, building, pushing, and deploying the application.
-- Service Monitoring: Integrated Prometheus metrics exporter and Grafana dashboard for real-time observability.
-- Local & Remote Deployment: Easily reproducible environment using Docker Compose, deployable to an Ubuntu Linux VM.
-- Modular Project Structure: Clearly separated components for API, monitoring, orchestration, and automation.
-- Production-like Setup: Includes Linux systemd service management, reverse proxy option, and secure deployment practices.
+### FastAPI Application
+- Simple REST API (/)
+- Exposes Prometheus metrics at /metrics
+- Custom application metric:
+  - request_count_total (counts incoming API calls)
+- Lightweight & production-ready
+
+### Dockerized Infrastructure
+- FastAPI app packaged in a Docker image
+- Multi-service architecture orchestrated with Docker Compose
+
+### Prometheus Monitoring
+- Automatically scrapes FastAPI metrics
+- Stores time-series data
+- Provides built-in and custom metrics
+- Used as datasource for Grafana
+
+### Grafana Dashboard
+- Visualizes application activity
+- Custom dashboard panel:
+  - Request Per Second (RPS) using:
+  rate(request_count_total[1m])
 
 ## Technologies Used
 - Backend: Python 3.11, FastAPI, Uvicorn
@@ -20,6 +38,28 @@ Optional Tools:
 - NGINX reverse proxy
 - systemd for long-running services
 - SSH for remote deployment automation
+
+## Architecture
+                ┌────────────────────┐
+                │      Browser       │
+                │ (User Requests)    │
+                └─────────┬──────────┘
+                          │
+                ┌─────────▼──────────┐
+                │    FastAPI App     │
+                │  (Docker Container)│
+                └───────┬────────────┘
+                        │ exposes /metrics
+                ┌───────▼───────────┐
+                │    Prometheus     │
+                │  (scrapes metrics)│
+                └───────┬───────────┘
+                        │ datasource
+                ┌───────▼─────────────┐
+                │      Grafana        │
+                │  (Dashboards)       │
+                └─────────────────────┘
+
 
 ## Installation and Setup
 ### 1. Clone the Repository
@@ -90,26 +130,49 @@ Services will be accessible at:
   - Request duration
   - Status code distribution
 
-## 📝 To-Do List (Active Development)
-### Environment Setup
-- [ ] Create GitHub repository
-- [ ] Finalize README structure
-- [ ] Install and configure Ubuntu VM
-- [ ] Install Docker & Docker Compose
-### Backend
-- [ ] Scaffold FastAPI application
-- [ ] Implement Prometheus metrics exporter
-- [ ] Write unit tests
-### Containerization
-- [ ] Build Dockerfile
-- [ ] Optimize Docker layers
-### Monitoring
-- [ ] Create Prometheus configuration
-- [ ] Provision Grafana dashboard
-### CI/CD
-- [ ] Create GitLab CI/CD pipeline
-- [ ] Implement test → build → push → deploy stages
-### Deployment
-- [ ] Set up remote deployment to VM
-- [ ] Configure systemd service
-- [ ] Add reverse proxy (optional)
+## Installation & Usage
+### 1. Clone the repository
+```bash
+git clone https://github.com/albx/devops-observability-pipeline.git
+cd devops-observability-pipeline
+```
+
+### 2. Start the full monitoring stack
+```bash
+docker compose up --build
+```
+
+This starts:
+
+| Service      | URL                         | Description                       |
+|--------------|------------------------------|-----------------------------------|
+| FastAPI      | http://localhost:8000        | Root API endpoint                 |
+| Metrics      | http://localhost:8000/metrics | Prometheus metrics exposition     |
+| Prometheus   | http://localhost:9090        | Query UI (PromQL)                 |
+| Grafana      | http://localhost:3000        | Dashboards (admin / admin)        |
+
+
+Grafana login (default):
+User: admin
+Pass: admin
+You’ll be prompted to set a new password.
+
+## Screenshots
+### Grafana Dashboard
+![Grafana Dashboard](Screenshots/Grafana.png)
+### Prometheus query table
+![Prometheus Query 1](Screenshots/Prometheus-Query.png)
+### Prometheus query graph
+![Prometheus Query 2](Screenshots/Prometheus-Query2.png)
+
+## Local Testing
+Trigger some test traffic:
+```bash
+curl http://localhost:8000/
+curl http://localhost:8000/
+```
+Then check:
+
+```bash
+curl http://localhost:8000/metrics | grep request
+```
